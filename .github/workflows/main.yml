@@ -24,10 +24,21 @@ jobs:
           sudo apt install playit -y
 
       - name: Run Server
+        env:
+          # Проверь, что в Settings -> Secrets имя совпадает с этим!
+          SECRET_TOKEN: ${{ secrets.PLAYIT_TOKEN }}
         run: |
-          # Даем права всем файлам .sh в папке
-          chmod +x *.sh
-          # Запускаем туннель в фоне
-          playit --secret ${{ secrets.PLAYIT_TOKEN }} & 
-          # Запускаем майн
+          # Пытаемся найти start.sh везде и запустить его
+          FILE=$(find . -name "start.sh" -print -quit)
+          if [ -z "$FILE" ]; then
+            echo "ОШИБКА: Файл start.sh не найден в репозитории!"
+            exit 1
+          fi
+          chmod +x "$FILE"
+          
+          # Запуск туннеля (используем переменную из env)
+          playit --secret "$SECRET_TOKEN" &
+          
+          # Запуск сервера
+          cd "$(dirname "$FILE")"
           ./start.sh
