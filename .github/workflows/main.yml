@@ -23,22 +23,19 @@ jobs:
           sudo apt update
           sudo apt install playit -y
 
-      - name: Run Server
-        env:
-          # Проверь, что в Settings -> Secrets имя совпадает с этим!
-          SECRET_TOKEN: ${{ secrets.PLAYIT_TOKEN }}
+      - name: Emergency start.sh creation
         run: |
-          # Пытаемся найти start.sh везде и запустить его
-          FILE=$(find . -name "start.sh" -print -quit)
-          if [ -z "$FILE" ]; then
-            echo "ОШИБКА: Файл start.sh не найден в репозитории!"
-            exit 1
+          # Если файла нет, создаем его на лету
+          if [ ! -f start.sh ]; then
+            echo "#!/bin/bash" > start.sh
+            echo "java -Xms2G -Xmx2G -jar paper.jar nogui" >> start.sh
+            chmod +x start.sh
+            echo "Файл start.sh был создан автоматически."
           fi
-          chmod +x "$FILE"
-          
-          # Запуск туннеля (используем переменную из env)
-          playit --secret "$SECRET_TOKEN" &
-          
-          # Запуск сервера
-          cd "$(dirname "$FILE")"
+
+      - name: Run Server
+        run: |
+          chmod +x start.sh
+          # Запуск туннеля. Если секрет пустой, он напишет ошибку в лог.
+          playit --secret "${{ secrets.PLAYIT_TOKEN }}" &
           ./start.sh
