@@ -1,0 +1,29 @@
+name: Minecraft Server
+on:
+  workflow_dispatch: # Кнопка ручного запуска
+
+jobs:
+  run-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Tunnel (ngrok)
+        # Этот шаг создаст временный адрес для входа
+        run: |
+          curl -s https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
+          unzip ngrok.zip
+          # Запуск туннеля на порт майна 25565
+          ./ngrok tcp 25565 &
+
+      - name: Run Minecraft
+        run: |
+          chmod +x start.sh
+          ./start.sh
