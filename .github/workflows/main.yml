@@ -1,6 +1,7 @@
 name: Minecraft Server
+
 on:
-  workflow_dispatch: # Кнопка ручного запуска
+  workflow_dispatch:
 
 jobs:
   run-server:
@@ -15,15 +16,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Tunnel (ngrok)
-        # Этот шаг создаст временный адрес для входа
+      - name: Install Playit.gg
         run: |
-          curl -s https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
-          unzip ngrok.zip
-          # Запуск туннеля на порт майна 25565
-          ./ngrok tcp 25565 &
+          curl -SsL https://playit-cloud.github.io/ppa/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/playit.gpg
+          echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./" | sudo tee /etc/apt/sources.list.d/playit.list
+          sudo apt update
+          sudo apt install playit -y
 
-      - name: Run Minecraft
+      - name: Run Server
         run: |
-          chmod +x start.sh
+          # Даем права всем файлам .sh в папке
+          chmod +x *.sh
+          # Запускаем туннель в фоне
+          playit --secret ${{ secrets.PLAYIT_TOKEN }} & 
+          # Запускаем майн
           ./start.sh
